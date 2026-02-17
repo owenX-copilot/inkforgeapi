@@ -1,0 +1,152 @@
+# InkForgeAPI 配置文件
+# 模型配置和系统设置
+
+# 系统设置
+system:
+  # 日志设置
+  log_level: "INFO"
+  log_dir: "/data/.inkforge/logs"  # 日志目录（eMMC数据盘）
+
+  # 性能设置
+  max_image_size: 1024  # 最大图像尺寸
+  max_file_size: 10485760  # 最大文件大小（10MB）
+
+  # 安全设置
+  cors_origins: ["*"]  # CORS允许的来源，生产环境应限制
+
+  # 模型设置
+  default_model: "chinese_handwriting"  # 默认模型
+  preload_models: false  # 是否在启动时预加载所有模型
+
+# 模型配置
+models:
+  # 中文手写识别模型
+  chinese_handwriting:
+    type: "chinese"  # 识别器类型，对应 ModelRegistry 中的注册名
+    description: "中文手写识别模型（995个常用汉字）"
+    model_path: "checkpoints/best_hanzi_tiny.pth"  # 模型文件路径（相对于配置文件）
+
+    # 模型特定配置
+    config:
+      class_mapping_path: "checkpoints/classes.json"  # 类别映射文件
+      img_size: 64  # 输入图像尺寸
+      mean: 0.5  # 标准化均值
+      std: 0.5  # 标准化标准差
+
+      # 预处理选项
+      auto_crop: true  # 是否自动裁剪字符
+      crop_threshold: 0.1  # 裁剪阈值
+      crop_padding: 5  # 裁剪边距
+
+      # 推理选项
+      top_k_default: 5  # 默认返回的预测数量
+      confidence_threshold: 0.01  # 置信度阈值
+
+  # 多字手写识别模型（Atomic-DP方法）
+  multi_char_handwriting:
+    type: "multi_char"  # 识别器类型
+    description: "多字手写识别模型（Atomic-DP方法，支持手写行识别）"
+    model_path: "checkpoints/best_hanzi_tiny.pth"  # 使用相同的单字模型
+
+    # 模型特定配置
+    config:
+      class_mapping_path: "checkpoints/classes.json"
+      img_size: 64
+      mean: 0.5
+      std: 0.5
+      
+      # Atomic-DP 特定配置
+      max_blocks_per_char: 3  # 每个字符最多由多少个原子块组成
+      shape_penalty_weight: 0.1  # 形状惩罚权重
+      search_method: "dp"  # 路径搜索方法：dp 或 dijkstra
+      min_gap_threshold: null  # 最小间隙阈值（null表示自动计算）
+      aspect_ratio_threshold: 1.2  # 过分割的宽高比阈值
+
+  # 预留：MNIST 数字识别模型
+  # mnist_digits:
+  #   type: "mnist"
+  #   description: "MNIST 手写数字识别模型"
+  #   model_path: "/mnt/data/models/mnist_model.pth"
+  #   config:
+  #     img_size: 28
+  #     mean: 0.1307
+  #     std: 0.3081
+
+  # 预留：EMNIST 字母数字识别模型
+  # emnist_alphanum:
+  #   type: "emnist"
+  #   description: "EMNIST 字母数字识别模型"
+  #   model_path: "/mnt/data/models/emnist_model.pth"
+  #   config:
+  #     img_size: 28
+  #     mean: 0.5
+  #     std: 0.5
+
+  # 预留：符号识别模型
+  # symbols:
+  #   type: "symbol"
+  #   description: "数学符号识别模型（<>!=等）"
+  #   model_path: "/mnt/data/models/symbol_model.pth"
+  #   config:
+  #     img_size: 32
+  #     mean: 0.5
+  #     std: 0.5
+
+# API 端点配置
+endpoints:
+  # 预测端点
+  predict:
+    max_top_k: 20  # 最大 top_k 值
+    min_top_k: 1  # 最小 top_k 值
+
+    # 文件上传限制
+    max_upload_size: 10485760  # 10MB
+    allowed_extensions: [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
+
+    # 图像验证
+    min_image_size: [16, 16]  # 最小图像尺寸
+    max_image_size: [1024, 1024]  # 最大图像尺寸
+    max_channels: 4  # 最大通道数
+
+  # 健康检查
+  health:
+    check_interval: 30  # 健康检查间隔（秒）
+    timeout: 5  # 检查超时时间（秒）
+
+# 监控和指标
+monitoring:
+  # 性能指标
+  enable_metrics: true  # 是否启用性能指标
+  metrics_port: 9090  # 指标端口
+
+  # 请求日志
+  log_requests: true  # 是否记录请求日志
+  log_predictions: false  # 是否记录预测结果（注意隐私）
+
+  # 性能监控
+  request_timeout: 30  # 请求超时时间（秒）
+  max_concurrent_requests: 100  # 最大并发请求数
+
+# 部署配置
+deployment:
+  # 服务器设置
+  host: "0.0.0.0"  # 监听地址
+  port: 20802  # 监听端口
+
+  # 进程管理
+  workers: 1  # 工作进程数（CPU密集型，建议设置为CPU核心数）
+  worker_class: "uvicorn.workers.UvicornWorker"  # Worker类
+
+  # 内存管理
+  max_memory_percent: 80  # 最大内存使用百分比
+  gc_threshold: 1000  # GC阈值（请求数）
+
+  # 重启策略
+  max_requests: 1000  # 每个工作进程处理的最大请求数
+  max_requests_jitter: 100  # 最大请求数抖动
+
+# 开发配置（仅开发环境使用）
+development:
+  reload: false  # 是否启用热重载
+  debug: false  # 是否启用调试模式
+  log_level: "DEBUG"  # 开发环境日志级别

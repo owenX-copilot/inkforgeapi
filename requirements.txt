@@ -1,0 +1,42 @@
+# InkForgeAPI 依赖包
+# 中文手写识别 API 服务
+
+# Web 框架
+fastapi
+uvicorn[standard]
+
+# 图像处理
+Pillow==10.1.0
+opencv-python==4.8.1.78
+numpy==1.24.3
+
+# 深度学习框架
+torch==2.6.0
+torchvision
+
+# 配置文件处理
+PyYAML==6.0.1
+
+# 类型注解支持
+typing-extensions
+
+# 开发工具（可选）
+python-multipart==0.0.6  # 文件上传支持
+
+# 监控和日志（可选）
+prometheus-client==0.19.0  # 指标收集
+structlog==23.2.0  # 结构化日志
+
+# 注意：在嵌入式设备上安装时，可能需要使用 CPU 版本的 PyTorch
+# 可以使用以下命令安装 CPU 版本：
+# pip install torch==2.1.0+cpu torchvision==0.16.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# 最小化安装（仅必需包）：
+# fastapi==0.104.1
+# uvicorn[standard]==0.24.0
+# Pillow==10.1.0
+# opencv-python==4.8.1.78
+# numpy==1.24.3
+# torch==2.1.0+cpu
+# torchvision==0.16.0+cpu
+# PyYAML==6.0.1
