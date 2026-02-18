@@ -167,12 +167,18 @@ logs/
 *.temp
 temp/
 
-# Test output
+# Test output and test scripts
 test_*.png
 test_*.jpg
+test_*.py
 test
+gui_*.py
+predict_*.py
+view_*.py
+*.service
 
 # Local configuration
+config.yaml
 config_local.yaml
 *.local.yaml
 

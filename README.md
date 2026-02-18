@@ -90,7 +90,7 @@ InkForgeAPI/
 │   └── train_status.json # 训练状态
 ├── train/                 # 训练代码
 │   └── train_hanzi_tiny.py
-└── test_*.py             # 各种测试脚本
+└── *.py                  # 其他Python脚本
 ```
 
 ### 3. 启动服务

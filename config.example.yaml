@@ -1,18 +1,18 @@
-# InkForgeAPI 配置文件
-# 模型配置和系统设置
+# InkForgeAPI 配置文件示例
+# 将此文件复制为 config.yaml 并根据需要修改
 
 # 系统设置
 system:
   # 日志设置
   log_level: "INFO"
-  log_dir: "/data/.inkforge/logs"  # 日志目录（eMMC数据盘）
+  log_dir: "./logs"  # 日志目录
 
   # 性能设置
   max_image_size: 1024  # 最大图像尺寸
   max_file_size: 10485760  # 最大文件大小（10MB）
 
   # 安全设置
-  cors_origins: ["*"]  # CORS允许的来源，生产环境应限制
+  cors_origins: ["*"]  # CORS允许的来源，生产环境应限制为具体域名
 
   # 模型设置
   default_model: "chinese_handwriting"  # 默认模型
@@ -22,9 +22,9 @@ system:
 models:
   # 中文手写识别模型
   chinese_handwriting:
-    type: "chinese"  # 识别器类型，对应 ModelRegistry 中的注册名
+    type: "chinese"  # 识别器类型
     description: "中文手写识别模型（995个常用汉字）"
-    model_path: "checkpoints/best_hanzi_tiny.pth"  # 模型文件路径（相对于配置文件）
+    model_path: "checkpoints/best_hanzi_tiny.pth"  # 模型文件路径
 
     # 模型特定配置
     config:
@@ -54,48 +54,18 @@ models:
       img_size: 64
       mean: 0.5
       std: 0.5
-      
+
       # Atomic-DP 特定配置
       max_blocks_per_char: 3  # 每个字符最多由多少个原子块组成
       shape_penalty_weight: 0.1  # 形状惩罚权重
       search_method: "dp"  # 路径搜索方法：dp 或 dijkstra
       min_gap_threshold: null  # 最小间隙阈值（null表示自动计算）
       aspect_ratio_threshold: 1.2  # 过分割的宽高比阈值
-      
+
       # 预处理配置
       preprocessing:
-        stroke_color: 127  # 笔迹灰度值（0-255），匹配训练数据的笔迹深度
+        stroke_color: 127  # 笔迹灰度值（0-255）
         background_color: 255  # 背景灰度值（白色）
-
-  # 预留：MNIST 数字识别模型
-  # mnist_digits:
-  #   type: "mnist"
-  #   description: "MNIST 手写数字识别模型"
-  #   model_path: "/mnt/data/models/mnist_model.pth"
-  #   config:
-  #     img_size: 28
-  #     mean: 0.1307
-  #     std: 0.3081
-
-  # 预留：EMNIST 字母数字识别模型
-  # emnist_alphanum:
-  #   type: "emnist"
-  #   description: "EMNIST 字母数字识别模型"
-  #   model_path: "/mnt/data/models/emnist_model.pth"
-  #   config:
-  #     img_size: 28
-  #     mean: 0.5
-  #     std: 0.5
-
-  # 预留：符号识别模型
-  # symbols:
-  #   type: "symbol"
-  #   description: "数学符号识别模型（<>!=等）"
-  #   model_path: "/mnt/data/models/symbol_model.pth"
-  #   config:
-  #     img_size: 32
-  #     mean: 0.5
-  #     std: 0.5
 
 # API 端点配置
 endpoints:
@@ -139,7 +109,7 @@ deployment:
   port: 20802  # 监听端口
 
   # 进程管理
-  workers: 1  # 工作进程数（CPU密集型，建议设置为CPU核心数）
+  workers: 1  # 工作进程数
   worker_class: "uvicorn.workers.UvicornWorker"  # Worker类
 
   # 内存管理
