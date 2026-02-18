@@ -56,6 +56,9 @@ pip install -r requirements.txt
 
 # 对于嵌入式设备（无 GPU），使用 CPU 版本的 PyTorch：
 pip install torch==2.1.0+cpu torchvision==0.16.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# 复制配置文件示例
+cp config.example.yaml config.yaml
 ```
 
 ### 2. 目录结构
@@ -63,13 +66,8 @@ pip install torch==2.1.0+cpu torchvision==0.16.0+cpu -f https://download.pytorch
 ```
 InkForgeAPI/
 ├── main.py                 # FastAPI 主应用
-├── config.yaml            # 配置文件
+├── config.example.yaml     # 配置文件示例（复制为config.yaml使用）
 ├── requirements.txt       # 依赖包列表
-├── test_client.py         # 测试客户端
-├── predict_demo_local.py  # 本地预测演示
-├── gui_hanzi_tiny.py      # GUI 应用程序
-├── gui_multi_char_test.py # 多字符测试GUI
-├── view_access_logs.py    # 访问日志查看器
 ├── recognizers/           # 识别器模块
 │   ├── __init__.py
 │   ├── base.py           # 抽象基类
