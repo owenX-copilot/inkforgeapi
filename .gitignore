@@ -170,6 +170,7 @@ temp/
 # Test output
 test_*.png
 test_*.jpg
+test
 
 # Local configuration
 config_local.yaml

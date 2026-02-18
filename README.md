@@ -10,6 +10,7 @@ InkForgeAPI 是一个轻量级的手写识别 API 服务，支持中文手写识
 - **资源友好**：模型懒加载，避免启动时内存爆炸
 - **易于扩展**：抽象架构支持多模型扩展
 - **生产就绪**：完整的错误处理、日志记录和监控
+- **多字识别**：支持 Atomic-DP 方法的多字符手写行识别
 
 ## 功能特性
 
@@ -36,7 +37,13 @@ InkForgeAPI 是一个轻量级的手写识别 API 服务，支持中文手写识
 
 ## 快速开始
 
-### 1. 环境准备
+### 使用在线服务
+本项目提供在线API服务，可直接调用：
+- 单字识别：`POST https://api.aozai.top/InkForge/predict`
+- 多字识别：`POST https://api.aozai.top/InkForge/multipredict`
+- API文档：https://api.aozai.top/InkForge/docs
+
+### 1. 环境准备（本地部署）
 
 ```bash
 # 创建虚拟环境（推荐）
@@ -59,23 +66,31 @@ InkForgeAPI/
 ├── config.yaml            # 配置文件
 ├── requirements.txt       # 依赖包列表
 ├── test_client.py         # 测试客户端
+├── predict_demo_local.py  # 本地预测演示
+├── gui_hanzi_tiny.py      # GUI 应用程序
+├── gui_multi_char_test.py # 多字符测试GUI
+├── view_access_logs.py    # 访问日志查看器
 ├── recognizers/           # 识别器模块
 │   ├── __init__.py
 │   ├── base.py           # 抽象基类
-│   └── chinese.py        # 中文手写识别器
+│   ├── chinese.py        # 中文手写识别器
+│   └── multi_char.py     # 多字符识别器（Atomic-DP方法）
 ├── utils/                 # 工具模块
 │   ├── __init__.py
 │   ├── preprocessing.py  # 图像预处理
-│   └── model_loader.py   # 模型加载工具
+│   ├── model_loader.py   # 模型加载工具
+│   ├── atomic_segmentation.py  # 原子分割
+│   ├── candidate_graph.py      # 候选图构建
+│   └── dp_search.py            # 动态规划搜索
 ├── model/                 # 模型定义
 │   └── hanzi_tiny.py     # HanziTiny 模型
 ├── checkpoints/           # 模型检查点
 │   ├── best_hanzi_tiny.pth  # 模型权重
-│   ├── classes.json      # 字符映射
+│   ├── classes.json      # 字符映射（995个汉字）
 │   └── train_status.json # 训练状态
 ├── train/                 # 训练代码
 │   └── train_hanzi_tiny.py
-└── gui_hanzi_tiny.py     # GUI 应用程序
+└── test_*.py             # 各种测试脚本
 ```
 
 ### 3. 启动服务
@@ -91,27 +106,14 @@ uvicorn main:app --host 0.0.0.0 --port 20802 --reload
 uvicorn main:app --host 0.0.0.0 --port 20802 --workers 1
 ```
 
-服务启动后，访问以下地址：
+**在线API服务地址**：
 - API 文档 (Swagger UI)：https://api.aozai.top/InkForge/docs
 - API 文档 (ReDoc)：https://api.aozai.top/InkForge/redoc
 - 健康检查：https://api.aozai.top/InkForge/health
 - 模型列表：https://api.aozai.top/InkForge/models
 
-### 4. 测试 API
+如需本地部署，服务启动后可通过相应端口访问上述端点。
 
-```bash
-# 使用测试客户端
-python test_client.py --test
-
-# 或使用 curl
-curl -X POST -F "file=@test_image.jpg" https://api.aozai.top/InkForge/predict
-
-# 健康检查
-curl https://api.aozai.top/InkForge/health
-
-# 查看模型列表
-curl https://api.aozai.top/InkForge/models
-```
 
 ## API 接口
 
@@ -182,9 +184,10 @@ endpoints:
 ### 模型配置
 
 当前支持的模型：
-- `chinese_handwriting`: 中文手写识别（630个汉字）
+- `chinese_handwriting`: 中文手写识别（995个常用汉字）
+- `multi_char_handwriting`: 多字符手写行识别（Atomic-DP方法，基于相同单字模型）
 
-预留接口（未来扩展）：
+配置文件中的预留接口（注释状态）：
 - `mnist_digits`: MNIST 数字识别
 - `emnist_alphanum`: EMNIST 字母数字识别
 - `symbols`: 数学符号识别
@@ -193,7 +196,7 @@ endpoints:
 
 ### HanziTiny 模型
 - **输入尺寸**: 64×64 灰度图
-- **输出类别**: 630个常用汉字
+- **输出类别**: 995个常用汉字
 - **模型大小**: ~1.4MB
 - **训练准确率**: 96.37%
 - **架构特点**:
@@ -201,6 +204,12 @@ endpoints:
   - SE 注意力机制
   - ReLU6 激活函数
   - Global Average Pooling
+
+### 多字符识别（Atomic-DP方法）
+- **方法**: 原子分割 + 动态规划路径搜索
+- **支持**: 手写行识别，自动分割连续字符
+- **特点**: 基于相同单字模型，无需额外训练
+- **配置**: 可调整分割阈值、形状惩罚权重等参数
 
 ### 字符映射
 字符映射文件：`checkpoints/classes.json`
@@ -213,9 +222,9 @@ endpoints:
 
 1. **环境准备**
 ```bash
-# 安装最小化依赖
+# 安装最小化依赖（参考requirements.txt）
 pip install fastapi uvicorn Pillow opencv-python numpy PyYAML
-pip install torch==2.1.0+cpu torchvision==0.16.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+pip install torch==2.6.0 torchvision  # 或使用CPU版本：torch==2.6.0+cpu
 ```
 
 ### 性能优化
@@ -283,16 +292,23 @@ sudo journalctl -u inkforgeapi -f
 
 ## 未来扩展
 
+### 已实现功能
+- [x] 中文手写识别（995汉字）
+- [x] RESTful API 服务
+- [x] 多字符手写行识别（Atomic-DP）
+- [x] 本地GUI应用程序
+- [x] 完整的配置管理系统
+
 ### 计划功能
 - [ ] 批量推理支持
 - [ ] 模型热更新
-- [ ] 多语言识别
+- [ ] 多语言识别扩展
 - [ ] 实时流识别
 
 ### 架构改进
-- [ ] 分布式部署
-- [ ] 负载均衡
-- [ ] 缓存机制
+- [ ] 分布式部署支持
+- [ ] 负载均衡优化
+- [ ] 高级缓存机制
 - [ ] 监控仪表板
 
 ## 贡献指南
