@@ -83,7 +83,7 @@ InkForgeAPI/
 ├── model/                 # 模型定义
 │   └── hanzi_tiny.py     # HanziTiny 模型
 ├── checkpoints/           # 模型检查点
-│   ├── best_hanzi_tiny.pth  # 模型权重
+│   ├── best.pth          # 模型权重
 │   ├── classes.json      # 字符映射（995个汉字）
 │   └── train_status.json # 训练状态
 └── *.py                  # 其他Python脚本
