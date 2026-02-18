@@ -61,6 +61,11 @@ models:
       search_method: "dp"  # 路径搜索方法：dp 或 dijkstra
       min_gap_threshold: null  # 最小间隙阈值（null表示自动计算）
       aspect_ratio_threshold: 1.2  # 过分割的宽高比阈值
+      
+      # 预处理配置
+      preprocessing:
+        stroke_color: 127  # 笔迹灰度值（0-255），匹配训练数据的笔迹深度
+        background_color: 255  # 背景灰度值（白色）
 
   # 预留：MNIST 数字识别模型
   # mnist_digits:

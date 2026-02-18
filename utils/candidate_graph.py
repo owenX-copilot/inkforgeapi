@@ -141,28 +141,13 @@ def combine_atomic_blocks(
     else:
         gray = region.copy()
     
-    # Resize to target size while preserving aspect ratio
-    h, w = gray.shape[:2]
-    
-    # Create a square canvas with the target size - WHITE background (255)
-    canvas = np.ones((target_height, target_width), dtype=np.float32) * 255
-    
-    # Scale to fit within the canvas
-    scale = min(target_width / w, target_height / h)
-    new_w = int(w * scale)
-    new_h = int(h * scale)
-    
-    # Resize
-    resized = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    
-    # Center on canvas
-    x_offset = (target_width - new_w) // 2
-    y_offset = (target_height - new_h) // 2
-    canvas[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = resized
+    # 直接拉伸到 target_size，不保持宽高比
+    # 这样可以让 "一" 这种非常扁的字变厚，更容易识别
+    resized = cv2.resize(gray, (target_width, target_height), interpolation=cv2.INTER_AREA)
 
     # 返回画布，不改变颜色
     # 前端已经确保是白底灰字（背景255，笔迹60）
-    return canvas
+    return resized.astype(np.float32)
 
 
 def geometric_filter(

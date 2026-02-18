@@ -562,8 +562,12 @@ async def multipredict(
             )
 
         # 标准化手写图像格式（确保灰度图，uint8类型）
-        # 不改变颜色，假设前端已经确保是白底灰字
-        image = normalize_handwriting_image(image)
+        # 从配置中读取预处理参数
+        model_config = model_loader.config.get("models", {}).get(model_name, {})
+        preprocess_config = model_config.get("config", {}).get("preprocessing", {})
+        stroke_color = preprocess_config.get("stroke_color", 81)
+        background_color = preprocess_config.get("background_color", 255)
+        image = normalize_handwriting_image(image, stroke_color=stroke_color, background_color=background_color)
 
         # 获取模型
         try:
@@ -699,8 +703,12 @@ async def multipredict_base64(
             )
 
         # 标准化手写图像格式（确保灰度图，uint8类型）
-        # 不改变颜色，假设前端已经确保是白底灰字
-        image = normalize_handwriting_image(image)
+        # 从配置中读取预处理参数
+        model_config = model_loader.config.get("models", {}).get(model_name, {})
+        preprocess_config = model_config.get("config", {}).get("preprocessing", {})
+        stroke_color = preprocess_config.get("stroke_color", 81)
+        background_color = preprocess_config.get("background_color", 255)
+        image = normalize_handwriting_image(image, stroke_color=stroke_color, background_color=background_color)
 
         # 获取模型
         try:

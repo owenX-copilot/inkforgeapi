@@ -44,17 +44,22 @@ def decode_base64_image(image_data: str) -> np.ndarray:
         raise ValueError(f"Base64 图像解码失败: {e}")
 
 
-def normalize_handwriting_image(image: np.ndarray) -> np.ndarray:
+def normalize_handwriting_image(image: np.ndarray, 
+                                stroke_color: int = 81,
+                                background_color: int = 255) -> np.ndarray:
     """
     标准化手写图像格式
 
     将白底任意颜色字转换为白底灰字：
     1. 转换为灰度图（如果是彩色）
     2. 确保uint8类型
-    3. 将笔迹转换为灰色（127），背景保持白色（255）
+    3. 对比度增强：归一化到全范围
+    4. 将笔迹转换为指定灰色，背景保持白色
 
     Args:
         image: 输入图像 (H, W) 或 (H, W, C)
+        stroke_color: 笔迹灰度值 (0-255)，默认 81（匹配训练数据）
+        background_color: 背景灰度值 (0-255)，默认 255（白色）
 
     Returns:
         灰度图像 (H, W)，uint8 类型，白底灰字
@@ -91,17 +96,41 @@ def normalize_handwriting_image(image: np.ndarray) -> np.ndarray:
             gray = (gray * 255).astype(np.uint8)
         else:
             gray = gray.astype(np.uint8)
-
-    # 将笔迹转换为灰色（127），背景保持白色（255）
-    # 假设背景是接近白色的颜色（> 200），笔迹是较深的颜色（<= 200）
-    # 创建一个掩码：笔迹区域为True，背景区域为False
-    stroke_mask = gray <= 200
-
-    # 创建结果图像：白色背景
-    result = np.ones_like(gray, dtype=np.uint8) * 255
-
-    # 在笔迹区域设置为灰色（127）
-    result[stroke_mask] = 127
+    
+    # ===== 对比度增强 =====
+    # 步骤1: 归一化 - 减去最小值，除以范围，拉满对比度
+    min_val = np.min(gray)
+    max_val = np.max(gray)
+    
+    if max_val > min_val:
+        # 归一化到 0-255 范围
+        gray = ((gray - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+    # 如果 max_val == min_val，说明是纯色图，保持原样
+    
+    # 步骤2: 使用自适应阈值找到笔迹区域
+    # 先用高斯模糊减少噪声
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # 使用 Otsu 自适应阈值
+    # THRESH_BINARY_INV 因为我们假设背景是亮色（白），笔迹是暗色
+    _, binary = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    
+    # 检查二值化结果是否合理
+    # 如果笔迹像素太少（<1%）或太多（>50%），可能阈值不合适
+    stroke_ratio = np.sum(binary > 0) / binary.size
+    
+    if stroke_ratio < 0.005 or stroke_ratio > 0.6:
+        # Otsu 结果不理想，使用固定阈值
+        # 归一化后，假设背景接近 255，笔迹较暗
+        # 使用 240 作为阈值（归一化后的图像）
+        _, binary = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
+    
+    # 步骤3: 创建结果图像
+    # 使用配置的背景色和笔迹颜色
+    result = np.ones_like(gray, dtype=np.uint8) * background_color
+    
+    # 在笔迹区域（binary > 0）设置为笔迹颜色
+    result[binary > 0] = stroke_color
 
     return result
 
