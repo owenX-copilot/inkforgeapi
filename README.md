@@ -86,8 +86,6 @@ InkForgeAPI/
 │   ├── best_hanzi_tiny.pth  # 模型权重
 │   ├── classes.json      # 字符映射（995个汉字）
 │   └── train_status.json # 训练状态
-├── train/                 # 训练代码
-│   └── train_hanzi_tiny.py
 └── *.py                  # 其他Python脚本
 ```
 
